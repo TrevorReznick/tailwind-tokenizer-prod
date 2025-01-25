@@ -1,0 +1,99 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/ui/ButtonComponent.astro'
+import Card  from '../components/ui/CardComponent.astro'
+import { ArrowLeft } from 'lucide-react';
+
+// This is handled client-side with a script tag
+let repoUrl = ''
+let isConverting = false
+let error = ''
+let conversionResult = null
+---
+
+<Layout title="Convertitore Tailwind">
+  <div class="min-h-screen bg-background">
+    <div class="container mx-auto p-4">
+      <a href="/" class="inline-flex items-center text-muted-foreground hover:text-foreground mb-8">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Torna alla Dashboard
+      </a>
+      
+      <h1 class="text-4xl font-bold mb-8">Convertitore Tailwind in Design Tokens</h1>
+      
+      <div class="max-w-2xl">
+        <form id="convertForm" class="space-y-4">
+          <input
+            type="text"
+            id="repoUrl"
+            placeholder="Inserisci l'URL del repository GitHub"
+            class="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            required
+          />
+          <Button type="submit" id="submitButton" class="w-full">
+            Converti
+          </Button>
+        </form>
+        
+        <div id="errorMessage" class="mt-4 p-4 bg-destructive/10 text-destructive rounded-md hidden">
+        </div>
+        
+        <div id="conversionResult">
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Get form elements
+  const form = document.getElementById('convertForm');
+  const repoUrlInput = document.getElementById('repoUrl');
+  const submitButton = document.getElementById('submitButton');
+  const errorMessage = document.getElementById('errorMessage');
+  const conversionResult = document.getElementById('conversionResult');
+
+  // Handle form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Get the repo URL
+    const repoUrl = (repoUrlInput as HTMLInputElement)?.value;
+    
+    // Update UI state
+    submitButton?.setAttribute('disabled', 'true');
+    submitButton.textContent = 'Conversione in corso...';
+    errorMessage?.classList.add('hidden');
+    conversionResult.innerHTML = '';
+
+    try {
+      const response = await fetch('/api/convert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ repoUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Errore nella richiesta API')
+      }
+
+      const result = await response.json()
+      if (result.jobId) {
+        // Handle successful conversion
+        conversionResult.innerHTML = `<div class="mt-4">Job ID: ${result.jobId}</div>`
+      } else {
+        throw new Error('Nessun job ID ricevuto')
+      }
+    } catch (err) {
+      // Show error message
+      errorMessage.textContent = 'Si è verificato un errore durante la conversione. Riprova.'
+      errorMessage?.classList.remove('hidden')
+    } finally {
+      // Reset UI state
+      submitButton?.removeAttribute('disabled')
+      submitButton.textContent = 'Converti'
+    }
+  })
+</script>
