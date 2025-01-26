@@ -3,6 +3,7 @@ import * as fs from 'node:fs'
 import * as fsPromises from 'node:fs/promises'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
+import {parseConfigToTokens} from '../scripts/utils'
 
 export async function parseGitRepo(repoUrl: string) {
   const tempBaseDir = path.join(process.cwd(), '..', '.git-temp')
@@ -10,20 +11,25 @@ export async function parseGitRepo(repoUrl: string) {
   const tempDir = path.join(tempBaseDir, tempDirName)
   
   try {
-    // Crea la directory temporanea
+
+    /* Crea la directory temporanea */
+
     await fsPromises.mkdir(tempBaseDir, { recursive: true })
     
-    // Clona il repository
+    /* Clona il repository */
+
     const git = simpleGit()
     console.log('Clonazione del repository...')
     await git.clone(repoUrl, tempDir, ['--depth', '1'])
 
-    // Trova e analizza i file
+    /* Trova e analizza i file */
+
     console.log('Scansione dei file...')
     const files = findFilesSync(tempDir)
     console.log(`Trovati ${files.length} file da analizzare`)
     
-    // Trova il file tailwind.config.js
+    /* Trova il file tailwind.config.js */
+
     const tailwindConfigPath = findTailwindConfig(tempDir)
     if (!tailwindConfigPath) {
       throw new Error('File tailwind.config.js non trovato nel repository')
@@ -31,8 +37,16 @@ export async function parseGitRepo(repoUrl: string) {
       console.log('trovato file tailwind.config')
     }
 
-    // Leggi e parsa il file tailwind.config.js
+    /* Leggi e parsa il file tailwind.config.js */
+
     const tailwindConfigContent = await fsPromises.readFile(tailwindConfigPath, 'utf-8')
+
+    const test = await parseConfigToTokens(tailwindConfigContent)
+
+    console.log(test)
+
+
+
     //const tokens = parseConfigToTokens(tailwindConfigContent)
     //console.log('Design tokens estratti:', tokens)
 
