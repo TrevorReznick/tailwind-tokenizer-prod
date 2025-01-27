@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import * as fsPromises from 'node:fs/promises'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
-import {parseConfigToTokens} from '../scripts/utils'
+import {parseConfigToTokens, generateCSSVariables} from '../scripts/utils'
 
 export async function parseGitRepo(repoUrl: string) {
   const tempBaseDir = path.join(process.cwd(), '..', '.git-temp')
@@ -41,21 +41,15 @@ export async function parseGitRepo(repoUrl: string) {
 
     const tailwindConfigContent = await fsPromises.readFile(tailwindConfigPath, 'utf-8')
 
-    const test = await parseConfigToTokens(tailwindConfigContent)
+    const tokens = await parseConfigToTokens(tailwindConfigContent)
 
-    console.log(test)
+    const cssVariables = generateCSSVariables(tokens)
 
+    console.log('tokens', tokens)
+    console.log('css variables', cssVariables)
 
-
-    //const tokens = parseConfigToTokens(tailwindConfigContent)
-    //console.log('Design tokens estratti:', tokens)
-
-    // Estrai le classi
-    //const tailwindClasses = await extractTailwindClasses(files);
-    //console.log(`Estratte ${tailwindClasses.size} classi uniche`)
-    
-    //return { tokens, tailwindClasses };
     return
+
   } catch (error) {
     console.error('Errore durante l\'analisi:', error)
     throw error
